@@ -35,7 +35,7 @@ public class Monitor
 			self[i]=new Object();
 			
 		}
-		IsTalking=False;
+		IsTalking=false;
 		
 	}
 
