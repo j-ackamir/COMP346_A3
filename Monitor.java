@@ -1,4 +1,4 @@
-import java.util.concurrent.locks.Condition;
+import java.util.PriorityQueue;
 
 /**
  * Class Monitor
@@ -13,10 +13,15 @@ public class Monitor
 	 * Data members
 	 * ------------
 	 */
-	enum State {THINKING, EATING, HUNGRY};
-	private State[] states;
-	private Object[] self;
-	private boolean IsTalking;
+	private enum STATE {THINKING, HUNGRY, EATING};
+	// number of philosophers
+	private int numPhilosophers;
+	// array that will hold the states
+	private STATE[] states;
+	// boolean to check if a philosopher is talking
+	private boolean is_talking;
+
+	private PriorityQueue<Integer> hungryList;
 
 
 	/**
@@ -25,18 +30,21 @@ public class Monitor
 	public Monitor(int piNumberOfPhilosophers)
 	{
 		// TODO: set appropriate number of chopsticks based on the # of philosophers
+		numPhilosophers = piNumberOfPhilosophers;
+		states = new STATE[numPhilosophers];
 
-		states= new State[piNumberOfPhilosophers];
-		self=new Condition[piNumberOfPhilosophers];
-
-		for(int i=0; i<piNumberOfPhilosophers; i++)
-		{
-			states[i]=State.THINKING;
-			self[i]=new Object();
-			
+		// initialize all philosophers to thinking
+		for(int i = 0; i < numPhilosophers; i++) {
+			states[i] = STATE.THINKING;
 		}
-		IsTalking=false;
-		
+
+		/**
+		 * Creating a new hungryList for the constructor
+		 */
+		hungryList = new PriorityQueue<>();
+
+		// initially, no philosopher is talking
+		is_talking = false;
 	}
 
 	/*
@@ -45,22 +53,53 @@ public class Monitor
 	 * -------------------------------
 	 */
 
+
+	public synchronized void checkActions(int philosopherPos){
+		try { 
+			while(true){
+
+				/* Here we have the (philosopherPos +1 being your left-handed side and your left-handed side
+				being philosopherPos + (numPhilosophers - 1)) % numPhilosophers>. We do % here because we don't have to go overboard
+				for the number of philosophers. philosopherPos is you, if you are hungry, and your neighbors (left and right positions) are not eating
+				then you are able to eat. Else, you would have to wait() your turn.
+				 */
+
+				if(states[(philosopherPos + 1) % numPhilosophers] != STATE.EATING && states[(philosopherPos + (numPhilosophers - 1)) % numPhilosophers] != STATE.EATING
+						&& states[philosopherPos] == STATE.HUNGRY){
+					states[philosopherPos] = STATE.EATING; // We know here that the philosopher can start eating
+					break;
+				}
+				else {
+					wait();
+				}
+			}
+		}
+
+		catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+	}
+
+
 	/**
 	 * Grants request (returns) to eat when both chopsticks/forks are available.
 	 * Else forces the philosopher to wait()
 	 */
 	public synchronized void pickUp(final int piTID)
 	{
-		// ...
-		states[piTID-1]=State.HUNGRY;
-		test(piTID);
-		if (states[piTID]!=State.EATING)
-		try{
-			self[piTID].wait();
-			
-		} catch (Exception e) {
-			Thread.currentThread().interrupt();
-		}
+		int PhilosopherPos = piTID - 1;
+
+		// changing state to hungry
+		states[PhilosopherPos] = STATE.HUNGRY;
+
+		// adding the philosopher to the hungry list
+		hungryList.add(piTID);
+
+		//test the philosopher
+		checkActions(PhilosopherPos);
+
+		// remove the philosopher from the hungry list since they are already eating
+		hungryList.remove();
 	}
 
 	/**
@@ -69,19 +108,13 @@ public class Monitor
 	 */
 	public synchronized void putDown(final int piTID)
 	{
-		// ...
-		states[piTID-1]=State.THINKING;
-		test((piTID+1) % states.length);
-		test((piTID+(states.length-1)) % states.length);
-		
-	}
-	public synchronized void test (final int i)
-	{
-		if (states[(i+1) % states.length] != State.EATING && states[i] == State.HUNGRY && states[(i+(states.length-1)) % states.length] != State.EATING)
-		{ 
-			states[i]=State.EATING;
-			self[i].notify();
-		}
+		int philosopherPos = piTID - 1;
+
+		// changing state to thinking
+		states[philosopherPos] = STATE.THINKING;
+
+		// Notifies the other threads, so that they may be able to see if they are able to see the actions of their neighbors
+		notifyAll();
 	}
 
 	/**
@@ -90,8 +123,12 @@ public class Monitor
 	 */
 	public synchronized void requestTalk()
 	{
-		if(IsTalking) {
+		if(is_talking) {
 			try {
+
+				/**
+				 * Wait until another philosopher is still talking, when he's done, you request to talk
+				 */
 				wait();
 				requestTalk();
 			} 
@@ -101,10 +138,9 @@ public class Monitor
 			}
 
 			// the philosopher is talking
-			IsTalking = true;
+			is_talking = true;
 		}
 	}
-
 
 	/**
 	 * When one philosopher is done talking stuff, others
@@ -112,8 +148,10 @@ public class Monitor
 	 */
 	public synchronized void endTalk()
 	{
-		// ...
-		IsTalking=false;
+		// the philosopher is no longer talking
+		is_talking = false;
+
+		// Notify all the other threads that you are the one done talking, and now they have a chance to speak as well.
 		notifyAll();
 	}
 }
