@@ -90,8 +90,21 @@ public class Monitor
 	 */
 	public synchronized void requestTalk()
 	{
-		// ...
+		if(IsTalking) {
+			try {
+				wait();
+				requestTalk();
+			} 
+
+			catch(InterruptedException e) {
+				System.out.println("A philosopher is currently speaking something very useful. Please wait to philosophy");
+			}
+
+			// the philosopher is talking
+			IsTalking = true;
+		}
 	}
+
 
 	/**
 	 * When one philosopher is done talking stuff, others
@@ -100,6 +113,8 @@ public class Monitor
 	public synchronized void endTalk()
 	{
 		// ...
+		IsTalking=false;
+		notifyAll();
 	}
 }
 
