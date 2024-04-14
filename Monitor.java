@@ -16,6 +16,7 @@ public class Monitor
 	enum State {THINKING, EATING, HUNGRY};
 	private State[] states;
 	private Object[] self;
+	private boolean IsTalking;
 
 
 	/**
@@ -34,6 +35,7 @@ public class Monitor
 			self[i]=new Object();
 			
 		}
+		IsTalking=False;
 		
 	}
 
