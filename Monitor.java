@@ -15,7 +15,7 @@ public class Monitor
 	 */
 	enum State {THINKING, EATING, HUNGRY};
 	private State[] states;
-	private Object[] forks;
+	private Object[] self;
 
 
 	/**
@@ -26,12 +26,12 @@ public class Monitor
 		// TODO: set appropriate number of chopsticks based on the # of philosophers
 
 		states= new State[piNumberOfPhilosophers];
-		forks=new Object[piNumberOfPhilosophers];
+		self=new Condition[piNumberOfPhilosophers];
 
 		for(int i=0; i<piNumberOfPhilosophers; i++)
 		{
 			states[i]=State.THINKING;
-			forks[i]=new Object();
+			self[i]=new Object();
 			
 		}
 		
@@ -53,8 +53,11 @@ public class Monitor
 		states[piTID-1]=State.HUNGRY;
 		test(piTID);
 		if (states[piTID]!=State.EATING)
-		{
+		try{
 			self[piTID].wait();
+			
+		} catch (Exception e) {
+			Thread.currentThread().interrupt();
 		}
 	}
 
@@ -75,7 +78,7 @@ public class Monitor
 		if (states[(i+1) % states.length] != State.EATING && states[i] == State.HUNGRY && states[(i+(states.length-1)) % states.length] != State.EATING)
 		{ 
 			states[i]=State.EATING;
-			self[i].signal();
+			self[i].notify();
 		}
 	}
 
