@@ -2,6 +2,7 @@ import java.util.InputMismatchException;
 
 /**
  * Class DiningPhilosophers
+ * Ph
  * The main starter.
  *
  * @author Serguei A. Mokhov, mokhov@cs.concordia.ca

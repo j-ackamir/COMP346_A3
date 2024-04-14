@@ -1,4 +1,4 @@
-import java.util.PriorityQueue;
+
 
 /**
  * Class Monitor
@@ -21,7 +21,7 @@ public class Monitor
 	// boolean to check if a philosopher is talking
 	private boolean is_talking;
 
-	private PriorityQueue<Integer> hungryList;
+	
 
 
 	/**
@@ -41,7 +41,7 @@ public class Monitor
 		/**
 		 * Creating a new hungryList for the constructor
 		 */
-		hungryList = new PriorityQueue<>();
+		
 
 		// initially, no philosopher is talking
 		is_talking = false;
@@ -93,13 +93,13 @@ public class Monitor
 		states[PhilosopherPos] = STATE.HUNGRY;
 
 		// adding the philosopher to the hungry list
-		hungryList.add(piTID);
+		
 
 		//test the philosopher
 		checkActions(PhilosopherPos);
 
 		// remove the philosopher from the hungry list since they are already eating
-		hungryList.remove();
+		
 	}
 
 	/**
